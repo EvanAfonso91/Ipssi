@@ -7,7 +7,7 @@ $product = new Product($pdo);
 if (isset($_POST['search_query'], $_POST['category']) || !empty($_POST['search_query']) || !empty($_POST['category'])) {
     $product->addNewProduct();
 }
-
+$security->isAdmin();
 ?>
 <body>
 <style>

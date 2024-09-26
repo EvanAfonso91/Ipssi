@@ -3,6 +3,7 @@ require_once 'src/elements/header.php';
 require_once 'conf/db.php';
 require_once 'controller/Product.php';
 
+$security->isAdmin();
 $product = new Product($pdo);
 
 $products = $product->getProduct();
