@@ -29,7 +29,7 @@ function viewProducts(filterProducts) {
     return text || 'Pas de description';
  }
 
- // Appel de la fonction pour afficher les produits au chargement de la page
+ // Appel de la fonction pour afficher les produits
  document.addEventListener("DOMContentLoaded", function() {
     viewProducts(products);
  });
