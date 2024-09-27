@@ -4,9 +4,11 @@ require 'src/elements/header.php';
 require 'controller/Product.php';
 
 $product = new Product($pdo);
+
 if (isset($_POST['search_query'], $_POST['category']) || !empty($_POST['search_query']) || !empty($_POST['category'])) {
     $product->addNewProduct();
 }
+// Vérification du rôle de l'utilisateur
 $security->isAdmin();
 ?>
 <body>

@@ -4,13 +4,13 @@ require_once 'controller/User.php';
 require_once 'controller/Security.php';
 
 $security = new Security;
-
+// Vérification de l'etat de connexion avant d'arriver sur la page
 $security->alreadyConnected();
 
 $user = new User($pdo);
 
-    $user->login();
-    $user->register();
+$user->login();
+$user->register();
 
 ?>
 <link rel="stylesheet" href="src/css/login.css">
@@ -30,6 +30,7 @@ $user = new User($pdo);
                             <label for="pass" class="label">Mot de passe</label>
                             <input id="pass" required="required" name="pass" type="password" class="input" data-type="password">
                         </div>
+                        <!-- Affichage d'une erreur pour la connexion-->
                         <?php if (isset($_SESSION['ERROR'])): ?>
                             <div class="group"><?php echo $_SESSION['ERROR']; ?></div>
                         <?php endif; ?>
@@ -56,6 +57,7 @@ $user = new User($pdo);
                             <label for="pass" class="label">Confirmer le mot de passe</label>
                             <input type='text' required="required" name='confirmPassword' class='input' data-type="password">
                         </div>
+                        <!-- Affichage d'une erreur pour l'inscription-->
                         <?php if (isset($_SESSION['ERROR'])): ?>
                             <div class="group"><?php echo $_SESSION['ERROR']; ?></div>
                         <?php endif; ?>

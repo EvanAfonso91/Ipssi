@@ -4,14 +4,15 @@ require 'controller/Cart.php';
 $security->isConnected();
 
 $cart = new Cart($pdo);
-
+// Appel d'une fonction en fonction du GET (Add ou Delete)
 if (isset($_GET['addCart'])) {
     $cart->addToCart();
 } elseif (isset($_GET['deleteCart'])) {
     $cart->deleteCart();
 }
-
+// Récupération des produits dans le panier
 $result = $cart->getCart();
+// Récupération du prix total des produits
 $totalPrice = $cart->getTotalPrice();
 ?>
 <style>
@@ -62,7 +63,7 @@ $totalPrice = $cart->getTotalPrice();
    </div>
 
    <script>
-      // Données PHP passées vers JS
+      // Encodage en json des produits pour les récupérer en JS
       const products = <?php echo json_encode($result); ?>;
    </script>
    <script src="src/js/cart.js"></script>

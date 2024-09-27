@@ -4,9 +4,9 @@ require_once 'conf/db.php';
 require 'controller/Product.php';
 
 $product = new Product($pdo);
-
+// Récupération des produits
 $products = $product->getProduct();
-
+// Récupération des catégories
 $category = $product->getCategory();
 ?>
 
@@ -36,6 +36,7 @@ $category = $product->getCategory();
          <div class="col-md-12">
             <div class="our_products" id="original-products">
                <div class="row">
+                  <!-- Affichage des catégories -->
                   <?php foreach ($category as $c) : ?>
                   <div class="col-md-4 margin_bottom1">
                      <div class="product_box">
@@ -53,7 +54,7 @@ $category = $product->getCategory();
          <!-- Les card des produits vont apparaitre ici -->
       </div>
    </div>
-
+<!-- Encodage en json des produits pour les récupérer en JS-->
 <script>const products = <?php echo json_encode($products); ?>;</script>
 <script src="src/js/index.js"></script>
 </body>
