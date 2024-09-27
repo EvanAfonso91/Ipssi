@@ -14,14 +14,17 @@ class Product
         }
     }
 
+    // Ajouter de nouveaux produits
     public function addNewProduct()
     {
-
+        // Récupère la requête de recherche et le nom de la catégorie envoyés via POST
         $searchQuery = $_POST['search_query'];
         $categoryName = $_POST['category'];
 
+        // Prépare l'URL pour l'API de recherche de produits en temps réel
         $url = "https://real-time-product-search.p.rapidapi.com/search-v2?q=" . urlencode($searchQuery) . "&language=en&page=1&limit=10&sort_by=BEST_MATCH&product_condition=ANY";
 
+        // Initialise une session cURL pour faire la requête à l'API
         $curl = curl_init();
         curl_setopt_array($curl, [
             CURLOPT_URL => $url,
@@ -43,17 +46,20 @@ class Product
         $err = curl_error($curl);
         curl_close($curl);
 
+        // Vérifie s'il y a des erreurs dans la requête cURL
         if ($err) {
-            echo "cURL Error #:" . $err;
+            echo "Erreur cURL :" . $err;
             return;
         }
 
+        // Décode la réponse JSON
         $products = json_decode($response, true);
         if ($products === null) {
             echo "Erreur de décodage JSON.";
             return;
         }
 
+        // Vérifie si des produits ont bien été trouvés dans la réponse
         if (!isset($products['data']['products']) || empty($products['data']['products'])) {
             echo "Aucun produit trouvé.";
             return;
@@ -63,6 +69,7 @@ class Product
             $this->pdo->beginTransaction();
             $categoryId = $this->getOrCreateCategory($categoryName);
 
+            // Parcourt chaque produit retourné par l'API pour l'insérer dans la base de données
             foreach ($products['data']['products'] as $product) {
                 $title = $product['product_title'];
                 $price = $product['offer']['price'];
@@ -70,6 +77,7 @@ class Product
                 $link = $product['product_page_url'];
                 $description = $product['product_description'];
 
+                // Requête pour insérer le produit dans la base de données
                 $query = "INSERT INTO product (title, price, description, image, link, category_id) 
                           VALUES (:title, :price, :description, :image, :link, :category_id)";
                 $stmt = $this->pdo->prepare($query);
@@ -82,22 +90,26 @@ class Product
                 $stmt->execute();
             }
 
-            $this->pdo->commit();
+            $this->pdo->commit(); // Valide la transaction
             echo "Les produits et la catégorie ont été ajoutés à la base de données.";
         } catch (Exception $e) {
+            // En cas d'erreur, annule la transaction et affiche un message d'erreur
             $this->pdo->rollBack();
             echo "Erreur: " . $e->getMessage();
         }
     }
 
+    // Vérifie si une catégorie existe ou en créer une nouvelle
     public function getOrCreateCategory($categoryName)
     {
+        // Requête pour vérifier si la catégorie existe déjà
         $query = "SELECT category_id FROM category WHERE category_name = :category_name";
         $stmt = $this->pdo->prepare($query);
         $stmt->bindParam(':category_name', $categoryName, PDO::PARAM_STR);
         $stmt->execute();
         $category = $stmt->fetch(PDO::FETCH_ASSOC);
 
+        // Si la catégorie existe, renvoie son ID, sinon la créer
         if ($category) {
             return $category['category_id'];
         } else {
@@ -105,10 +117,11 @@ class Product
             $stmt = $this->pdo->prepare($query);
             $stmt->bindParam(':category_name', $categoryName, PDO::PARAM_STR);
             $stmt->execute();
-            return $this->pdo->lastInsertId();
+            return $this->pdo->lastInsertId(); // Renvoie l'ID de la nouvelle catégorie
         }
     }
 
+    // Récupère tous les produits
     public function getProduct()
     {
         $query = "SELECT id , title, price, description, image, category_id FROM product";
@@ -119,6 +132,7 @@ class Product
         return $products;
     }
 
+    // Récupère toutes les catégories
     public function getCategory()
     {
         $query = "SELECT category_id , category_name FROM category";
@@ -129,50 +143,48 @@ class Product
         return $category;
     }
 
-    public function deleteProduct() {
-            $productID = $_GET['deleteProduct'];
+    // Supprime un produit en fonction de son ID
+    public function deleteProduct()
+    {
+        $productID = $_GET['deleteProduct'];
 
-            $query = "DELETE FROM product WHERE id = :product";
-            $stmt = $this->pdo->prepare($query);
-            $stmt->bindValue(':product', $productID, PDO::PARAM_INT);
-            $stmt->execute();
-            header('Location: panel.php');
+        $query = "DELETE FROM product WHERE id = :product";
+        $stmt = $this->pdo->prepare($query);
+        $stmt->bindValue(':product', $productID, PDO::PARAM_INT);
+        $stmt->execute();
+        header('Location: panel.php'); // Redirige vers le panneau de gestion
     }
 
+    // Met à jour le titre d'un produit
     public function updateProduct()
-{
-    // Vérifier que l'ID du produit et le nouveau titre sont bien présents dans le POST
-    if (isset($_POST['productId']) && isset($_POST['newTitle'])) {
-        $productId = $_POST['productId'];
-        $newTitle = trim($_POST['newTitle']);
+    {
+        // Vérifie que l'ID du produit et le nouveau titre sont bien présents dans le POST
+        if (isset($_POST['productId']) && isset($_POST['newTitle'])) {
+            $productId = $_POST['productId'];
+            $newTitle = trim($_POST['newTitle']);
 
-        // Vérifier que le titre n'est pas vide après avoir été nettoyé
-        if (!empty($newTitle)) {
-            try {
-                // Préparer la requête SQL pour mettre à jour le produit
-                $query = "UPDATE product SET title = :newTitle WHERE id = :productId";
-                $stmt = $this->pdo->prepare($query);
+            if (!empty($newTitle)) {
+                try {
+                    // Requête pour mettre à jour le produit
+                    $query = "UPDATE product SET title = :newTitle WHERE id = :productId";
+                    $stmt = $this->pdo->prepare($query);
+                    $stmt->bindParam(':newTitle', $newTitle, PDO::PARAM_STR);
+                    $stmt->bindParam(':productId', $productId, PDO::PARAM_INT);
 
-                // Liaison des paramètres
-                $stmt->bindParam(':newTitle', $newTitle, PDO::PARAM_STR);
-                $stmt->bindParam(':productId', $productId, PDO::PARAM_INT);
-
-                // Exécuter la requête
-                if ($stmt->execute()) {
-                    echo "Produit mis à jour avec succès.";
-                } else {
-                    echo "Échec de la mise à jour du produit.";
+                    if ($stmt->execute()) {
+                        echo "Produit mis à jour avec succès.";
+                    } else {
+                        echo "Échec de la mise à jour du produit.";
+                    }
+                } catch (PDOException $e) {
+                    // Affiche un message en cas d'erreur
+                    echo "Erreur lors de la mise à jour du produit : " . $e->getMessage();
                 }
-            } catch (PDOException $e) {
-                // En cas d'erreur, afficher un message approprié
-                echo "Erreur lors de la mise à jour du produit : " . $e->getMessage();
+            } else {
+                echo "Le titre ne peut pas être vide.";
             }
         } else {
-            echo "Le titre ne peut pas être vide.";
+            echo "ID du produit ou nouveau titre manquant.";
         }
-    } else {
-        echo "ID du produit ou nouveau titre manquant.";
     }
-}
-
 }
